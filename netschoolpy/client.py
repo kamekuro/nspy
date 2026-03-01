@@ -779,9 +779,7 @@ class NetSchool:
                     return data
 
         except asyncio.TimeoutError:
-            raise exceptions.ESIAError(
-                "Таймаут ожидания QR сканирования"
-            )
+            raise
         finally:
             writer.close()
             try:
