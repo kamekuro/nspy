@@ -442,6 +442,7 @@ class NetSchool:
             timeout=timeout or 30,
         ) as esia_client:
 
+          try:
             # === ШАГ 1: crosslogin chain ===
             url = await self._esia_crosslogin(esia_client, sgo_origin)
 
@@ -493,6 +494,12 @@ class NetSchool:
                 esia_client, sgo_origin, login_state, school,
                 timeout=timeout,
             )
+          except exceptions.ESIAError:
+            raise
+          except (httpx.ConnectError, httpx.ConnectTimeout, httpx.ReadTimeout) as exc:
+            raise exceptions.ESIAError(
+                f"Не удалось подключиться к серверу Госуслуг (ESIA): {exc}"
+            ) from exc
 
     # ═══════════════════════════════════════════════════════════
     #  Госуслуги: QR-код
@@ -528,6 +535,7 @@ class NetSchool:
             timeout=timeout or 30,
         ) as esia_client:
 
+          try:
             # === ШАГ 1: crosslogin chain ===
             url = await self._esia_crosslogin(esia_client, sgo_origin)
 
@@ -637,6 +645,12 @@ class NetSchool:
                 esia_client, sgo_origin, login_state, school,
                 timeout=timeout,
             )
+          except exceptions.ESIAError:
+            raise
+          except (httpx.ConnectError, httpx.ConnectTimeout, httpx.ReadTimeout) as exc:
+            raise exceptions.ESIAError(
+                f"Не удалось подключиться к серверу Госуслуг (ESIA): {exc}"
+            ) from exc
 
         return signed_token
 
