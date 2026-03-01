@@ -202,7 +202,13 @@ class NetSchool:
 
         url = f"{sgo_origin}/webapi/sso/esia/crosslogin"
         for _ in range(20):
-            r = await esia_client.get(url)
+            try:
+                r = await esia_client.get(url)
+            except (httpx.ConnectError, httpx.ConnectTimeout, httpx.ReadTimeout) as exc:
+                raise exceptions.ESIAError(
+                    f"Не удалось подключиться при переходе на Госуслуги "
+                    f"(URL: {url}): {exc}"
+                ) from exc
             for h in r.headers.get_list("set-cookie"):
                 p = h.split(";")[0].split("=", 1)
                 if len(p) == 2:
