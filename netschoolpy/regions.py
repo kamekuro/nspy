@@ -18,10 +18,11 @@ from __future__ import annotations
 __all__ = ["REGIONS", "get_url", "list_regions"]
 
 
-# region → base URL  (отсортировано по алфавиту, 26 регионов)
+# region → base URL  (отсортировано по алфавиту, 27 регионов)
 REGIONS: dict[str, str] = {
     "Алтайский край": "https://netschool.edu22.info",
     "Амурская область": "https://region.obramur.ru",
+    "Волгоградская область": "http://sgo.volganet.ru",
     "Забайкальский край": "https://region.zabedu.ru",
     "Калужская область": "https://edu.admoblkaluga.ru:444",
     "Камчатский край": "https://school.sgo41.ru",
