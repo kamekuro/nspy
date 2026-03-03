@@ -30,16 +30,22 @@ class HttpSession:
       через Tor (socks5://127.0.0.1:9050), если он доступен.
       Полезно для региональных серверов СГО, блокирующих datacenter IP.
     • Если общий таймаут ``timeout`` исчерпан — бросает ``ServerUnavailable``.
+    • ``proxy`` — необязательный SOCKS5/HTTP прокси-URL (например,
+      ``socks5://127.0.0.1:1080``). Если задан — все запросы идут через него
+      (Tor-fallback отключается). Полезно для индивидуального решения с VLESS.
     """
 
-    def __init__(self, base_url: str, *, timeout: int | None = None):
+    def __init__(self, base_url: str, *, timeout: int | None = None,
+                 proxy: str | None = None):
         self._base_url = base_url.rstrip("/")
+        self._external_proxy = proxy
         self._client = httpx.AsyncClient(
             base_url=f"{self._base_url}/webapi",
             headers={
                 "user-agent": "NetSchoolPy/1.0",
                 "referer": self._base_url,
             },
+            proxy=proxy if proxy else None,
             event_hooks={"response": [self._check_status]},
         )
         self._timeout = timeout if timeout is not None else _DEFAULT_TIMEOUT
@@ -154,13 +160,25 @@ class HttpSession:
                     raise
 
         # Если хост уже помечен как требующий Tor — идём сразу через него
-        if self._base_url in _tor_hosts:
+        if self._base_url in _tor_hosts and not self._external_proxy:
             try:
                 return await asyncio.wait_for(
                     _do_request(self._get_active_client()), _TOR_TIMEOUT
                 )
             except asyncio.TimeoutError:
                 raise ServerUnavailable("Сервер не ответил (Tor)") from None
+
+        # Если задан внешний прокси — идём только через него (Tor не нужен)
+        if self._external_proxy:
+            proxy_timeout = _TOR_TIMEOUT
+            try:
+                return await asyncio.wait_for(
+                    _do_request(self._client), proxy_timeout
+                )
+            except asyncio.TimeoutError:
+                raise ServerUnavailable("Сервер не ответил (прокси)") from None
+            except (httpx.ConnectError, httpx.ProxyError) as exc:
+                raise ServerUnavailable(f"Прокси недоступен: {exc}") from exc
 
         # Пробуем прямое соединение
         connect_failed = False

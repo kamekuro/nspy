@@ -58,8 +58,17 @@ class NetSchool:
             diary = await ns.diary()
     """
 
-    def __init__(self, url: str, *, timeout: int | None = None):
-        self._http = HttpSession(url, timeout=timeout)
+    def __init__(self, url: str, *, timeout: int | None = None,
+                 proxy: str | None = None):
+        """
+        :param url: URL сервера Сетевой Город.
+        :param timeout: Таймаут HTTP-запросов в секундах.
+        :param proxy: Необязательный SOCKS5/HTTP прокси-URL, например
+            ``socks5://127.0.0.1:1080``. Полезно для серверов, которые
+            блокируют datacenter IP (можно использовать с VLESS/xray).
+            При указании Tor-fallback не применяется.
+        """
+        self._http = HttpSession(url, timeout=timeout, proxy=proxy)
 
         self._student_id: int = -1
         self._year_id: int = -1
@@ -247,6 +256,7 @@ class NetSchool:
         self,
         esia_client: httpx.AsyncClient,
         login_data: dict,
+        otp_callback=None,
     ) -> str:
         """Обработать ответ ESIA и вернуть ``redirect_url``.
 
@@ -259,16 +269,16 @@ class NetSchool:
         action = login_data.get("action", "")
 
         if action == "ENTER_MFA":
-            return await self._handle_esia_mfa(esia_client, login_data)
+            return await self._handle_esia_mfa(esia_client, login_data, otp_callback=otp_callback)
         if action == "SOLVE_ANOMALY_REACTION":
-            return await self._handle_esia_anomaly(esia_client, login_data)
+            return await self._handle_esia_anomaly(esia_client, login_data, otp_callback=otp_callback)
         if action == "DONE":
             url = login_data.get("redirect_url")
             if url:
                 return url
             raise exceptions.ESIAError("ESIA вернула DONE без redirect_url")
         if action in ("MAX_QUIZ", "CHANGE_PASSWORD"):
-            return await self._handle_esia_post_mfa(esia_client, login_data)
+            return await self._handle_esia_post_mfa(esia_client, login_data, otp_callback=otp_callback)
 
         raise exceptions.ESIAError(
             f"Неожиданный ответ ESIA: "
@@ -413,6 +423,7 @@ class NetSchool:
         *,
         school: str | None = None,
         timeout: int | None = None,
+        otp_callback=None,
     ) -> None:
         """Полноценный вход через Госуслуги (ESIA).
 
@@ -428,6 +439,12 @@ class NetSchool:
         :param school: Название школы/организации для выбора.
                        Если к аккаунту привязано несколько организаций
                        и school не указан — выбор через input().
+        :param otp_callback: ``async def(mfa_type: str, mfa_info: dict) -> str``
+                             Колбэк для получения одноразового кода MFA
+                             (SMS, TOTP, MAX и т.д.).
+                             Если не указан — код запрашивается через input().
+                             Пример: можно использовать для интеграции с ботом,
+                             чтобы запросить код у пользователя через Telegram.
         """
         if esia_login is None:
             esia_login = input("Логин Госуслуг (телефон/email/СНИЛС): ").strip()
@@ -483,7 +500,7 @@ class NetSchool:
 
             # === ШАГ 3: обработка ответа (MFA и т.д.) ===
             redirect_url = await self._esia_resolve_login_response(
-                esia_client, login_data,
+                esia_client, login_data, otp_callback=otp_callback,
             )
             if not redirect_url:
                 raise exceptions.ESIAError(
@@ -518,6 +535,7 @@ class NetSchool:
         *,
         school: str | None = None,
         timeout: int | None = None,
+        otp_callback=None,
     ) -> str:
         """Вход через Госуслуги по QR-коду.
 
@@ -633,7 +651,7 @@ class NetSchool:
 
             # === ШАГ 4: обработка ответа (MFA и т.д.) ===
             redirect_url = await self._esia_resolve_login_response(
-                esia_client, login_data,
+                esia_client, login_data, otp_callback=otp_callback,
             )
             if not redirect_url:
                 raise exceptions.ESIAError(
@@ -840,11 +858,14 @@ class NetSchool:
         self,
         esia_client: httpx.AsyncClient,
         login_data: dict,
+        otp_callback=None,
     ) -> str:
         """Обработка двухфакторной аутентификации ESIA.
 
         Поддерживает SMS, TOTP, MAX и PUSH (Госключ).
 
+        :param otp_callback: ``async def(mfa_type, mfa_info) -> str`` —
+            асинхронный колбэк для получения кода. Если None — используется input().
         :returns: redirect_url
         :raises MFAError: если код неверен или MFA не пройдена.
         """
@@ -889,7 +910,14 @@ class NetSchool:
                 )
                 prompt = "Введите код из приложения-аутентификатора: "
 
-            code = input(prompt).strip()
+            if otp_callback is not None:
+                import asyncio as _asyncio
+                if _asyncio.iscoroutinefunction(otp_callback):
+                    code = await otp_callback(mfa_type, otp_details)
+                else:
+                    code = otp_callback(mfa_type, otp_details)
+            else:
+                code = input(prompt).strip()
             if not code:
                 raise exceptions.MFAError("Код подтверждения не введён")
 
@@ -961,7 +989,7 @@ class NetSchool:
             if redirect_url:
                 return redirect_url
 
-            return await self._handle_esia_post_mfa(esia_client, data)
+            return await self._handle_esia_post_mfa(esia_client, data, otp_callback=otp_callback)
 
         elif mfa_type == "PUSH":
             log.info("Подтвердите вход в приложении Госключ...")
@@ -977,12 +1005,13 @@ class NetSchool:
         if data.get("redirect_url"):
             return data["redirect_url"]
 
-        return await self._handle_esia_post_mfa(esia_client, data)
+        return await self._handle_esia_post_mfa(esia_client, data, otp_callback=otp_callback)
 
     async def _handle_esia_post_mfa(
         self,
         esia_client: httpx.AsyncClient,
         data: dict,
+        otp_callback=None,
     ) -> str:
         """Обработка шагов после MFA (MAX_QUIZ, смена пароля и т.д.)."""
         base = "https://esia.gosuslugi.ru/aas/oauth2/api/login"
@@ -1045,7 +1074,7 @@ class NetSchool:
 
             elif action == "SOLVE_ANOMALY_REACTION":
                 redirect_url = await self._handle_esia_anomaly(
-                    esia_client, data,
+                    esia_client, data, otp_callback=otp_callback,
                 )
                 if redirect_url:
                     return redirect_url
@@ -1080,6 +1109,7 @@ class NetSchool:
         self,
         esia_client: httpx.AsyncClient,
         login_data: dict,
+        otp_callback=None,
     ) -> str:
         """Обработка SOLVE_ANOMALY_REACTION (проверка безопасности)."""
         reaction = login_data.get("reaction_details", {})
@@ -1101,7 +1131,15 @@ class NetSchool:
         code_len = start_data.get("code_length", 6)
         log.info("SMS-код отправлен на %s (%d цифр)", phone, code_len)
 
-        code = input("Введите код подтверждения: ").strip()
+        anomaly_details = {"phone": phone, "code_length": code_len}
+        if otp_callback is not None:
+            import asyncio as _asyncio
+            if _asyncio.iscoroutinefunction(otp_callback):
+                code = await otp_callback("SMS", anomaly_details)
+            else:
+                code = otp_callback("SMS", anomaly_details)
+        else:
+            code = input("Введите код подтверждения: ").strip()
         if not code:
             raise exceptions.MFAError("Код подтверждения не введён")
 
@@ -1125,14 +1163,14 @@ class NetSchool:
 
         action = result.get("action", "")
         if action == "ENTER_MFA":
-            return await self._handle_esia_mfa(esia_client, result)
+            return await self._handle_esia_mfa(esia_client, result, otp_callback=otp_callback)
         if action in ("MAX_QUIZ", "CHANGE_PASSWORD", "DONE"):
-            return await self._handle_esia_post_mfa(esia_client, result)
+            return await self._handle_esia_post_mfa(esia_client, result, otp_callback=otp_callback)
 
         r = await esia_client.get(
             f"{base}/next-step", headers=_ESIA_API_HEADERS,
         )
-        return await self._handle_esia_post_mfa(esia_client, r.json())
+        return await self._handle_esia_post_mfa(esia_client, r.json(), otp_callback=otp_callback)
 
     async def _poll_esia_push(
         self,

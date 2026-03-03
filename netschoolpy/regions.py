@@ -22,7 +22,7 @@ __all__ = ["REGIONS", "get_url", "list_regions"]
 REGIONS: dict[str, str] = {
     "Алтайский край": "https://netschool.edu22.info",
     "Амурская область": "https://region.obramur.ru",
-    "Волгоградская область": "http://sgo.volganet.ru",  # ⚠ требует прокси
+    "Волгоградская область": "http://sgo.volganet.ru",  # ⚠ требует прокси (не работает с datacenter IP)
     "Забайкальский край": "https://region.zabedu.ru",
     "Калужская область": "https://edu.admoblkaluga.ru:444",
     "Камчатский край": "https://school.sgo41.ru",
