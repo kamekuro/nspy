@@ -7,7 +7,7 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name="netschoolpy",
-    version="3.3.2",
+    version="3.3.3",
     description="Асинхронный клиент для «Сетевого города»",
     long_description=long_description,
     long_description_content_type="text/markdown",
