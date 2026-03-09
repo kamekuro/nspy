@@ -12,8 +12,8 @@ from netschoolpy.exceptions import ServerUnavailable
 
 log = logging.getLogger(__name__)
 
-_DEFAULT_TIMEOUT = 5   # секунд (прямое соединение)
-_TOR_TIMEOUT = 30      # секунд (Tor медленнее)
+_DEFAULT_TIMEOUT = 5  # секунд (прямое соединение)
+_TOR_TIMEOUT = 30  # секунд (Tor медленнее)
 
 # SOCKS5-прокси Tor (локальный, поднятый системой)
 _TOR_PROXY = "socks5://127.0.0.1:9050"
@@ -35,8 +35,9 @@ class HttpSession:
       (Tor-fallback отключается). Полезно для индивидуального решения с VLESS.
     """
 
-    def __init__(self, base_url: str, *, timeout: int | None = None,
-                 proxy: str | None = None):
+    def __init__(
+        self, base_url: str, *, timeout: int | None = None, proxy: str | None = None
+    ):
         self._base_url = base_url.rstrip("/")
         self._external_proxy = proxy
         self._client = httpx.AsyncClient(
@@ -83,8 +84,11 @@ class HttpSession:
         follow_redirects: bool = False,
     ) -> httpx.Response:
         return await self._send(
-            "GET", path, params=params,
-            timeout=timeout, follow_redirects=follow_redirects,
+            "GET",
+            path,
+            params=params,
+            timeout=timeout,
+            follow_redirects=follow_redirects,
         )
 
     async def post(
@@ -98,8 +102,13 @@ class HttpSession:
         timeout: int | None = None,
     ) -> httpx.Response:
         return await self._send(
-            "POST", path, data=data, json=json,
-            params=params, headers=headers, timeout=timeout,
+            "POST",
+            path,
+            data=data,
+            json=json,
+            params=params,
+            headers=headers,
+            timeout=timeout,
         )
 
     async def close(self) -> None:
@@ -112,6 +121,7 @@ class HttpSession:
     def _get_active_client(self) -> httpx.AsyncClient:
         """Возвращает Tor-клиент если хост заблокирован, иначе обычный."""
         import httpx as _httpx
+
         host = self._base_url
         if host in _tor_hosts:
             if not hasattr(self, "_tor_client"):
@@ -145,7 +155,8 @@ class HttpSession:
             while True:
                 try:
                     req = client.build_request(
-                        method, path,
+                        method,
+                        path,
                         **{k: v for k, v in kwargs.items() if v is not None},
                     )
                     return await client.send(req, follow_redirects=follow_redirects)
@@ -172,9 +183,7 @@ class HttpSession:
         if self._external_proxy:
             proxy_timeout = _TOR_TIMEOUT
             try:
-                return await asyncio.wait_for(
-                    _do_request(self._client), proxy_timeout
-                )
+                return await asyncio.wait_for(_do_request(self._client), proxy_timeout)
             except asyncio.TimeoutError:
                 raise ServerUnavailable("Сервер не ответил (прокси)") from None
             except (httpx.ConnectError, httpx.ProxyError) as exc:
@@ -183,9 +192,7 @@ class HttpSession:
         # Пробуем прямое соединение
         connect_failed = False
         try:
-            return await asyncio.wait_for(
-                _do_request(self._client), direct_timeout
-            )
+            return await asyncio.wait_for(_do_request(self._client), direct_timeout)
         except (httpx.ConnectError, httpx.ConnectTimeout):
             connect_failed = True
         except asyncio.TimeoutError:
@@ -212,6 +219,7 @@ class HttpSession:
             if 500 <= response.status_code < 600:
                 log.warning(
                     "Server error %d for %s",
-                    response.status_code, response.url,
+                    response.status_code,
+                    response.url,
                 )
             response.raise_for_status()

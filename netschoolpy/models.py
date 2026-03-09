@@ -27,13 +27,14 @@ def _parse_datetime(value: Any) -> datetime.datetime:
     s = str(value)
     # Нормализуем дробную часть секунд до 6 цифр
     import re as _re
-    m = _re.match(r'^(.+\.\d{1,6})(\d*)(.*)$', s)
+
+    m = _re.match(r"^(.+\.\d{1,6})(\d*)(.*)$", s)
     if m:
         frac = m.group(1)
         # дополняем до 6 цифр после точки
-        dot_idx = frac.rfind('.')
-        digits_after = frac[dot_idx + 1:]
-        frac = frac[:dot_idx + 1] + digits_after.ljust(6, '0')
+        dot_idx = frac.rfind(".")
+        digits_after = frac[dot_idx + 1 :]
+        frac = frac[: dot_idx + 1] + digits_after.ljust(6, "0")
         s = frac + m.group(3)
     return datetime.datetime.fromisoformat(s)
 
@@ -43,11 +44,13 @@ def _parse_time(value: Any) -> datetime.time:
     if isinstance(value, datetime.time):
         return value
     parts = str(value).split(":")
-    return datetime.time(int(parts[0]), int(parts[1]),
-                         int(parts[2]) if len(parts) > 2 else 0)
+    return datetime.time(
+        int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) > 2 else 0
+    )
 
 
 # ──────────────────────────── Вложения ────────────────────────────
+
 
 @dataclass(frozen=True)
 class Attachment:
@@ -69,6 +72,7 @@ class Attachment:
 
 # ───────────────────────────── Автор ──────────────────────────────
 
+
 @dataclass(frozen=True)
 class Author:
     id: int
@@ -86,6 +90,7 @@ class Author:
 
 # ─────────────────────────── Объявления ───────────────────────────
 
+
 @dataclass(frozen=True)
 class Announcement:
     name: str
@@ -101,13 +106,12 @@ class Announcement:
             author=Author.from_raw(data["author"]),
             content=data.get("description", ""),
             post_date=_parse_datetime(data["postDate"]),
-            attachments=[
-                Attachment.from_raw(a) for a in data.get("attachments", [])
-            ],
+            attachments=[Attachment.from_raw(a) for a in data.get("attachments", [])],
         )
 
 
 # ─────────────────────────── Задания ─────────────────────────────
+
 
 @dataclass(frozen=True)
 class Assignment:
@@ -146,7 +150,11 @@ class Assignment:
             duty = False
 
         mark_comment = data.get("markComment")
-        comment = mark_comment["name"] if isinstance(mark_comment, dict) and "name" in mark_comment else ""
+        comment = (
+            mark_comment["name"]
+            if isinstance(mark_comment, dict) and "name" in mark_comment
+            else ""
+        )
 
         kind_id = data.get("typeId", 0)
         type_info = (type_mapping or {}).get(kind_id, {})
@@ -174,6 +182,7 @@ class Assignment:
 
 # ──────────────────────────── Уроки ──────────────────────────────
 
+
 @dataclass(frozen=True)
 class Lesson:
     day: datetime.date
@@ -185,7 +194,9 @@ class Lesson:
     assignments: List[Assignment] = field(default_factory=list)
 
     @classmethod
-    def from_raw(cls, data: dict, type_mapping: Dict[int, dict] | None = None) -> Lesson:
+    def from_raw(
+        cls, data: dict, type_mapping: Dict[int, dict] | None = None
+    ) -> Lesson:
         return cls(
             day=_parse_date(data["day"]),
             start=_parse_time(data["startTime"]),
@@ -202,6 +213,7 @@ class Lesson:
 
 # ──────────────────────────── День ───────────────────────────────
 
+
 @dataclass(frozen=True)
 class Day:
     day: datetime.date
@@ -216,6 +228,7 @@ class Day:
 
 
 # ─────────────────────────── Дневник ─────────────────────────────
+
 
 @dataclass(frozen=True)
 class Diary:
@@ -233,6 +246,7 @@ class Diary:
 
 
 # ─────────────────────────── Школы ───────────────────────────────
+
 
 @dataclass(frozen=True)
 class ShortSchool:
@@ -294,6 +308,7 @@ class School:
 
 # ─────────────────────────── Способы входа ───────────────────────────
 
+
 @dataclass(frozen=True)
 class LoginMethods:
     """Доступные способы авторизации на сервере SGO.
@@ -312,6 +327,7 @@ class LoginMethods:
 
     Свойство :attr:`summary` возвращает человекочитаемое описание.
     """
+
     password: bool
     esia: bool
     esia_main: bool
@@ -370,9 +386,11 @@ class LoginMethods:
 
 # ─────────────────────────── Почта / сообщения ─────────────────────
 
+
 @dataclass(frozen=True)
 class MailEntry:
     """Краткая запись о письме (из списка/реестра)."""
+
     id: int
     subject: str
     author: str
@@ -393,6 +411,7 @@ class MailEntry:
 @dataclass(frozen=True)
 class MailPage:
     """Страница списка писем из реестра."""
+
     entries: List[MailEntry]
     page: int
     total_items: int
@@ -409,6 +428,7 @@ class MailPage:
 @dataclass(frozen=True)
 class MailRecipient:
     """Получатель письма / контакт."""
+
     id: str  # base64-кодированный идентификатор
     name: str
     organization_name: str
@@ -425,6 +445,7 @@ class MailRecipient:
 @dataclass(frozen=True)
 class Message:
     """Письмо внутренней почты SGO."""
+
     id: int
     subject: str
     text: str
@@ -454,7 +475,6 @@ class Message:
             can_reply=data.get("canReplyAll", False) or not data.get("noReply", True),
             can_forward=data.get("canForward", False),
             file_attachments=[
-                Attachment.from_raw(a)
-                for a in data.get("fileAttachments", [])
+                Attachment.from_raw(a) for a in data.get("fileAttachments", [])
             ],
         )

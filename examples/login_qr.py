@@ -15,7 +15,7 @@ from netschoolpy import NetSchool
 
 async def main():
     url = os.getenv("NS_URL", "https://sgo.your-region.ru")
-    
+
     # Callback-функция, которая будет вызвана библиотекой
     # Она получает строку `qr_data`, которую нужно превратить в QR-код
     async def my_qr_callback(qr_data: str):

@@ -76,9 +76,7 @@ def get_url(query: str) -> str | None:
             return url
 
     # 2. Подстрока
-    matches = [
-        (name, url) for name, url in REGIONS.items() if q in name.lower()
-    ]
+    matches = [(name, url) for name, url in REGIONS.items() if q in name.lower()]
     if len(matches) == 1:
         return matches[0][1]
 

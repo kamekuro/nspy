@@ -15,7 +15,6 @@ from netschoolpy.exceptions import (
     SessionExpired,
 )
 
-
 # ═══════════════════════════════════════════════════════════
 #  _extract_access_token_from_session_store
 # ═══════════════════════════════════════════════════════════
@@ -163,6 +162,7 @@ class TestSessionExport:
         class FakeCookies:
             def __iter__(self):
                 return iter({"NSSESSIONID": "abc"}.items())
+
             def items(self):
                 return [("NSSESSIONID", "abc")]
 
@@ -200,6 +200,7 @@ class TestSearchSchoolsArgs:
         with pytest.raises(Exception) as exc_info:
             await search_schools("https://127.0.0.1:1", "школа", timeout=1)
         assert not isinstance(exc_info.value, ValueError)
+
 
 # ═══════════════════════════════════════════════════════════
 #  get_login_methods — валидация аргументов

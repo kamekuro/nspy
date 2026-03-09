@@ -3,9 +3,10 @@ import os
 import sys
 from netschoolpy import NetSchool
 
+
 async def main():
     url = os.getenv("NS_URL", "https://sgo.your-region.ru")
-    
+
     if "your-region.ru" in url:
         print("❌ ОШИБКА: Не указан URL дневника (NS_URL).")
         return
@@ -14,11 +15,11 @@ async def main():
     ns_login = os.getenv("NS_LOGIN")
     ns_password = os.getenv("NS_PASSWORD")
     ns_school = os.getenv("NS_SCHOOL")
-    
+
     # ESIA
     esia_login = os.getenv("ESIA_LOGIN")
     esia_password = os.getenv("ESIA_PASSWORD")
-    
+
     use_qr = "--qr" in sys.argv
 
     async with NetSchool(url) as ns:
@@ -27,10 +28,14 @@ async def main():
                 print("Вход через QR...")
                 try:
                     import qrcode
+
                     async def qr_cb(data):
-                        qr = qrcode.QRCode(); qr.add_data(data); qr.print_ascii()
+                        qr = qrcode.QRCode()
+                        qr.add_data(data)
+                        qr.print_ascii()
                         print("\n⚠️  ВАЖНО: QR-код действителен только 1 минуту!")
                         print("Отсканируйте QR-код в приложении Госуслуги -> Сканер")
+
                     await ns.login_via_gosuslugi_qr(qr_cb)
                 except ImportError:
                     print("pip install qrcode")
@@ -54,7 +59,9 @@ async def main():
                     for assignment in lesson.assignments:
                         if assignment.attachments:
                             found = True
-                            print(f"\nНайдено вложение по предмету: {lesson.subject} ({assignment.kind})")
+                            print(
+                                f"\nНайдено вложение по предмету: {lesson.subject} ({assignment.kind})"
+                            )
                             for attachment in assignment.attachments:
                                 print(f"  - {attachment.name} (ID: {attachment.id})")
 
@@ -62,6 +69,7 @@ async def main():
                 print("Вложений не найдено")
         except Exception as e:
             print(f"Ошибка: {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
