@@ -44,9 +44,7 @@ def _parse_time(value: Any) -> datetime.time:
     if isinstance(value, datetime.time):
         return value
     parts = str(value).split(":")
-    return datetime.time(
-        int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) > 2 else 0
-    )
+    return datetime.time(int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) > 2 else 0)
 
 
 # ──────────────────────────── Вложения ────────────────────────────
@@ -194,9 +192,7 @@ class Lesson:
     assignments: List[Assignment] = field(default_factory=list)
 
     @classmethod
-    def from_raw(
-        cls, data: dict, type_mapping: Dict[int, dict] | None = None
-    ) -> Lesson:
+    def from_raw(cls, data: dict, type_mapping: Dict[int, dict] | None = None) -> Lesson:
         return cls(
             day=_parse_date(data["day"]),
             start=_parse_time(data["startTime"]),
@@ -205,8 +201,7 @@ class Lesson:
             number=data["number"],
             subject=data.get("subjectName", ""),
             assignments=[
-                Assignment.from_raw(a, type_mapping)
-                for a in data.get("assignments", [])
+                Assignment.from_raw(a, type_mapping) for a in data.get("assignments", [])
             ],
         )
 
@@ -474,7 +469,72 @@ class Message:
             mailbox=data.get("mailBox", "Inbox"),
             can_reply=data.get("canReplyAll", False) or not data.get("noReply", True),
             can_forward=data.get("canForward", False),
-            file_attachments=[
-                Attachment.from_raw(a) for a in data.get("fileAttachments", [])
-            ],
+            file_attachments=[Attachment.from_raw(a) for a in data.get("fileAttachments", [])],
+        )
+
+
+# ─────────────────────────── Прочее ─────────────────────
+
+
+@dataclass(frozen=True)
+class StudentSettings:
+    show_mobile_phone: bool
+    default_desktop: int
+    language: str
+    favorite_reports: list
+    password_expired: int
+    recovery_answer: str
+    recovery_question: str
+    theme: int
+    user_id: int
+    show_netschool_app: bool
+    show_sferum_banner: bool
+
+    @classmethod
+    def from_raw(cls, data: dict) -> Student:
+        return cls(
+            show_mobile_phone=data.get("showMobilePhone", None),
+            default_desktop=data.get("defaultDesktop", None),
+            language=data.get("language", None),
+            favorite_reports=data.get("favoriteReports", None),
+            password_expired=data.get("passwordExpired", None),
+            recovery_answer=data.get("recoveryAnswer", None),
+            recovery_question=data.get("recoveryQuestion", None),
+            theme=data.get("theme", None),
+            user_id=data.get("userId", None),
+            show_netschool_app=data.get("showNetSchoolApp", None),
+            show_sferum_banner=data.get("showSferumBanner", None),
+        )
+
+
+@dataclass(frozen=True)
+class Student:
+    user_id: int
+    first_name: str
+    last_name: str
+    middle_name: str
+    login: str
+    birthdate: datetime
+    roles: list
+    school_year_id: int
+    mobile_phone: str
+    email: str
+    exists_photo: bool
+    user_settings: StudentSettings
+
+    @classmethod
+    def from_raw(cls, data: dict) -> Student:
+        return cls(
+            user_id=data.get("userId", None),
+            first_name=data.get("firstName", None),
+            last_name=data.get("lastName", None),
+            middle_name=data.get("middleName", None),
+            login=data.get("loginName", None),
+            birthdate=data.get("birthDate", None),
+            roles=data.get("roles", None),
+            school_year_id=data.get("schoolyearId", None),
+            mobile_phone=data.get("mobilePhone", None),
+            email=data.get("email", None),
+            exists_photo=data.get("existsPhoto", None),
+            user_settings=StudentSettings.from_raw(data.get("userSettings", {})),
         )

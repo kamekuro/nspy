@@ -38,9 +38,7 @@ async def main():
             try:
                 import qrcode
             except ImportError:
-                print(
-                    "Ошибка: Для QR-входа нужно установить qrcode: pip install qrcode"
-                )
+                print("Ошибка: Для QR-входа нужно установить qrcode: pip install qrcode")
                 return
 
             async def qr_callback(qr_data):

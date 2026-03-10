@@ -11,9 +11,7 @@ class TestREGIONS:
 
     def test_all_urls_have_scheme(self) -> None:
         for name, url in REGIONS.items():
-            assert url.startswith(
-                ("http://", "https://")
-            ), f"{name}: некорректный URL {url}"
+            assert url.startswith(("http://", "https://")), f"{name}: некорректный URL {url}"
 
     def test_sorted(self) -> None:
         keys = list(REGIONS.keys())

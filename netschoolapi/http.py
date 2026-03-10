@@ -35,9 +35,7 @@ class HttpSession:
       (Tor-fallback отключается). Полезно для индивидуального решения с VLESS.
     """
 
-    def __init__(
-        self, base_url: str, *, timeout: int | None = None, proxy: str | None = None
-    ):
+    def __init__(self, base_url: str, *, timeout: int | None = None, proxy: str | None = None):
         self._base_url = base_url.rstrip("/")
         self._external_proxy = proxy
         self._client = httpx.AsyncClient(

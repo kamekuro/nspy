@@ -29,6 +29,8 @@ from .models import (
     Message,
     School,
     ShortSchool,
+    Student,
+    StudentSettings
 )
 
 __all__ = ["NetSchoolAPI", "search_schools", "get_login_methods"]
@@ -58,9 +60,7 @@ class NetSchoolAPI:
             diary = await ns.diary()
     """
 
-    def __init__(
-        self, url: str, *, timeout: int | None = None, proxy: str | None = None
-    ):
+    def __init__(self, url: str, *, timeout: int | None = None, proxy: str | None = None):
         """
         :param url: URL сервера Сетевой Город.
         :param timeout: Таймаут HTTP-запросов в секундах.
@@ -287,8 +287,7 @@ class NetSchoolAPI:
             )
 
         raise exceptions.ESIAError(
-            f"Неожиданный ответ ESIA: "
-            f"{json.dumps(login_data, ensure_ascii=False)[:500]}"
+            f"Неожиданный ответ ESIA: " f"{json.dumps(login_data, ensure_ascii=False)[:500]}"
         )
 
     async def _esia_callback_to_login_state(
@@ -474,8 +473,7 @@ class NetSchoolAPI:
 
                 if "esia.gosuslugi.ru" not in url:
                     raise exceptions.ESIAError(
-                        f"Не удалось добраться до страницы ESIA. "
-                        f"Финальный URL: {url}"
+                        f"Не удалось добраться до страницы ESIA. " f"Финальный URL: {url}"
                     )
 
                 # === ШАГ 2: логин/пароль ESIA ===
@@ -494,9 +492,7 @@ class NetSchoolAPI:
                         "INVALID_LOGIN": "Неверный логин",
                         "ACCOUNT_LOCKED": "Аккаунт заблокирован",
                         "ACCOUNT_NOT_FOUND": "Аккаунт не найден",
-                        "CAPTCHA_REQUIRED": (
-                            "Требуется captcha (слишком много попыток)"
-                        ),
+                        "CAPTCHA_REQUIRED": ("Требуется captcha (слишком много попыток)"),
                     }
                     msg = error_messages.get(error_code, error_code)
                     raise exceptions.ESIAError(f"Ошибка ESIA: {msg}")
@@ -508,9 +504,7 @@ class NetSchoolAPI:
                     otp_callback=otp_callback,
                 )
                 if not redirect_url:
-                    raise exceptions.ESIAError(
-                        "Не удалось получить redirect_url от ESIA"
-                    )
+                    raise exceptions.ESIAError("Не удалось получить redirect_url от ESIA")
 
                 # === ШАГ 4: callback chain → loginState ===
                 login_state = await self._esia_callback_to_login_state(
@@ -575,8 +569,7 @@ class NetSchoolAPI:
 
                 if "esia.gosuslugi.ru" not in url:
                     raise exceptions.ESIAError(
-                        f"Не удалось добраться до страницы ESIA. "
-                        f"Финальный URL: {url}"
+                        f"Не удалось добраться до страницы ESIA. " f"Финальный URL: {url}"
                     )
 
                 # === ШАГ 2–3: QR-генерация и ожидание (с retry) ===
@@ -615,9 +608,7 @@ class NetSchoolAPI:
                     signed_token = qr_data.get("signed_token", "")
                     qr_id = qr_data.get("qr_id", "")
                     if not signed_token or not qr_id:
-                        raise exceptions.ESIAError(
-                            f"ESIA не вернула QR данные: {qr_data}"
-                        )
+                        raise exceptions.ESIAError(f"ESIA не вернула QR данные: {qr_data}")
 
                     qr_content = f"gosuslugi://auth/signed_token={signed_token}"
 
@@ -631,10 +622,7 @@ class NetSchoolAPI:
                         self._print_qr_to_stdout(qr_content)
 
                     # SSE-поллинг
-                    sse_url = (
-                        f"https://esia.gosuslugi.ru"
-                        f"/qr-delegate/qr/subscribe/{qr_id}"
-                    )
+                    sse_url = f"https://esia.gosuslugi.ru" f"/qr-delegate/qr/subscribe/{qr_id}"
 
                     try:
                         login_data = await self._poll_esia_qr_sse(
@@ -647,8 +635,7 @@ class NetSchoolAPI:
                         if "ESIA-007110" in str(e) and qr_attempt < max_qr_retries:
                             delay = qr_attempt * 2
                             log.warning(
-                                "ESIA вернула ошибку 007110, повтор %d/%d "
-                                "через %dс...",
+                                "ESIA вернула ошибку 007110, повтор %d/%d " "через %dс...",
                                 qr_attempt,
                                 max_qr_retries,
                                 delay,
@@ -799,12 +786,8 @@ class NetSchoolAPI:
                     ):
                         raise exceptions.ESIAError(f"QR сессия истекла: {code}")
                     if code:
-                        msg = (
-                            error.get("message", "") if isinstance(error, dict) else ""
-                        )
-                        raise exceptions.ESIAError(
-                            f"Ошибка ESIA при QR-входе: {code} — {msg}"
-                        )
+                        msg = error.get("message", "") if isinstance(error, dict) else ""
+                        raise exceptions.ESIAError(f"Ошибка ESIA при QR-входе: {code} — {msg}")
                     return data
 
         except asyncio.TimeoutError:
@@ -1016,9 +999,7 @@ class NetSchoolAPI:
         if data.get("redirect_url"):
             return data["redirect_url"]
 
-        return await self._handle_esia_post_mfa(
-            esia_client, data, otp_callback=otp_callback
-        )
+        return await self._handle_esia_post_mfa(esia_client, data, otp_callback=otp_callback)
 
     async def _handle_esia_post_mfa(
         self,
@@ -1165,8 +1146,7 @@ class NetSchoolAPI:
         )
         if r.status_code != 200:
             raise exceptions.MFAError(
-                f"Ошибка подтверждения кода безопасности: "
-                f"{r.status_code} {r.text[:300]}"
+                f"Ошибка подтверждения кода безопасности: " f"{r.status_code} {r.text[:300]}"
             )
 
         result = r.json()
@@ -1178,9 +1158,7 @@ class NetSchoolAPI:
 
         action = result.get("action", "")
         if action == "ENTER_MFA":
-            return await self._handle_esia_mfa(
-                esia_client, result, otp_callback=otp_callback
-            )
+            return await self._handle_esia_mfa(esia_client, result, otp_callback=otp_callback)
         if action in ("MAX_QUIZ", "CHANGE_PASSWORD", "DONE"):
             return await self._handle_esia_post_mfa(
                 esia_client, result, otp_callback=otp_callback
@@ -1425,11 +1403,7 @@ class NetSchoolAPI:
 
         if isinstance(data, list):
             for item in data:
-                if (
-                    isinstance(item, dict)
-                    and item.get("active")
-                    and item.get("accessToken")
-                ):
+                if isinstance(item, dict) and item.get("active") and item.get("accessToken"):
                     return item["accessToken"]
             for item in data:
                 if isinstance(item, dict) and item.get("accessToken"):
@@ -1493,9 +1467,7 @@ class NetSchoolAPI:
             student = info["students"][info["currentStudentId"]]
             self._student_id = student["studentId"]
         except Exception as e:
-            raise exceptions.SessionExpired(
-                f"Сессия истекла или невалидна: {e}"
-            ) from None
+            raise exceptions.SessionExpired(f"Сессия истекла или невалидна: {e}") from None
 
         self._year_id = payload.get("year_id", -1)
         self._school_id = payload.get("school_id", -1)
@@ -1610,6 +1582,18 @@ class NetSchoolAPI:
             timeout=timeout,
         )
         return [Announcement.from_raw(a) for a in resp.json()]
+
+    async def mysettings(
+        self,
+        *,
+        timeout: int | None = None,
+    ) -> List[Student]:
+        """Получить информацию об ученике."""
+        resp = await self._authed_get(
+            "mysettings",
+            timeout=timeout,
+        )
+        return Student.from_raw(resp)
 
     async def attachments(
         self,
@@ -1730,6 +1714,17 @@ class NetSchoolAPI:
     ) -> List[ShortSchool]:
         """Список доступных школ (алиас для ``search_schools()``)."""
         return await self.search_schools(timeout=timeout)
+
+
+    async def getCurrentStudentId(self, *, timeout: int = None):
+        resp = await self._http.get(
+            "student/diary/init",
+            timeout=timeout,
+        )
+        diary_info = resp.json()
+        student = diary_info['students'][0]
+        studentId = student['studentId']
+        return studentId
 
     async def _resolve_school(
         self,
