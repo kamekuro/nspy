@@ -2,7 +2,7 @@
 
 import datetime
 
-from netschoolpy.models import (
+from netschoolapi.models import (
     Announcement,
     Assignment,
     Attachment,

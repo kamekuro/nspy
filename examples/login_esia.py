@@ -1,6 +1,6 @@
 import asyncio
 import os
-from netschoolpy import NetSchool
+from netschoolpy import NetSchoolAPI
 
 
 async def main():
@@ -11,7 +11,7 @@ async def main():
     esia_login = os.getenv("ESIA_LOGIN", "79000000000")
     esia_password = os.getenv("ESIA_PASSWORD", "gosuslugi_pass")
 
-    async with NetSchool(url) as ns:
+    async with NetSchoolAPI(url) as ns:
         try:
             print("Вход через Госуслуги (ESIA)...")
 

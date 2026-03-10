@@ -1,7 +1,7 @@
 import asyncio
 import os
 import sys
-from netschoolpy import NetSchool
+from netschoolpy import NetSchoolAPI
 
 
 async def main():
@@ -22,7 +22,7 @@ async def main():
 
     use_qr = "--qr" in sys.argv
 
-    async with NetSchool(url) as ns:
+    async with NetSchoolAPI(url) as ns:
         try:
             if use_qr:
                 print("Вход через QR...")

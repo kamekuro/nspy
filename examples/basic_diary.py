@@ -1,7 +1,7 @@
 import asyncio
 import os
 import sys
-from netschoolpy import NetSchool
+from netschoolpy import NetSchoolAPI
 
 
 async def main():
@@ -29,7 +29,7 @@ async def main():
     # Флаг для QR
     use_qr = "--qr" in sys.argv
 
-    ns = NetSchool(url)
+    ns = NetSchoolAPI(url)
 
     try:
         if use_qr:

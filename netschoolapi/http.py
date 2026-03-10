@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 import httpx
 
-from netschoolpy.exceptions import ServerUnavailable
+from .exceptions import ServerUnavailable
 
 log = logging.getLogger(__name__)
 

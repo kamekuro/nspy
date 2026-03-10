@@ -4,7 +4,7 @@
 
 ## Как это работает?
 
-В отличие от обычной авторизации (где вы вводите логин и пароль от NetSchool), здесь используется ваш аккаунт Госуслуг.
+В отличие от обычной авторизации (где вы вводите логин и пароль от NetSchoolAPI), здесь используется ваш аккаунт Госуслуг.
 
 ## Пример кода
 
@@ -12,12 +12,12 @@
 
 ```python
 import asyncio
-from netschoolpy import NetSchool
+from netschoolpy import NetSchoolAPI
 
 async def main():
     url = 'https://sgo.your-region.ru'  # Адрес вашего дневника
     
-    async with NetSchool(url) as ns:
+    async with NetSchoolAPI(url) as ns:
         # Вход через ESIA
         await ns.login_via_gosuslugi(
             'ваш_телефон_или_email',
@@ -71,5 +71,5 @@ await ns.login_via_gosuslugi_qr(
 
 ## Возможные проблемы
 
-1.  **Неверный регион:** Убедитесь, что URL `NetSchool` (`https://sgo...`) поддерживает вход через Госуслуги (на странице входа должна быть кнопка «Войти через Госуслуги»).
+1.  **Неверный регион:** Убедитесь, что URL `NetSchoolAPI` (`https://sgo...`) поддерживает вход через Госуслуги (на странице входа должна быть кнопка «Войти через Госуслуги»).
 2.  **Капча:** Если Госуслуги потребуют ввести капчу, библиотека выбросит исключение `LoginError`.

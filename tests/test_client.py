@@ -4,9 +4,9 @@ import json
 
 import pytest
 
-from netschoolpy import NetSchool
-from netschoolpy.client import get_login_methods, search_schools
-from netschoolpy.exceptions import (
+from netschoolapi import NetSchoolAPI
+from netschoolapi.client import get_login_methods, search_schools
+from netschoolapi.exceptions import (
     ESIAError,
     LoginError,
     MFAError,
@@ -23,47 +23,47 @@ from netschoolpy.exceptions import (
 class TestExtractAccessToken:
     def test_active_entry_in_list(self):
         payload = [{"active": True, "accessToken": "token-123"}]
-        token = NetSchool._extract_access_token_from_session_store(
+        token = NetSchoolAPI._extract_access_token_from_session_store(
             json.dumps(payload),
         )
         assert token == "token-123"
 
     def test_stringified_list(self):
         payload = [{"active": True, "accessToken": "token-456"}]
-        token = NetSchool._extract_access_token_from_session_store(
+        token = NetSchoolAPI._extract_access_token_from_session_store(
             json.dumps(json.dumps(payload)),
         )
         assert token == "token-456"
 
     def test_dict_with_access_token(self):
         payload = {"accessToken": "tok-dict"}
-        token = NetSchool._extract_access_token_from_session_store(
+        token = NetSchoolAPI._extract_access_token_from_session_store(
             json.dumps(payload),
         )
         assert token == "tok-dict"
 
     def test_dict_with_at(self):
         payload = {"at": "tok-at"}
-        token = NetSchool._extract_access_token_from_session_store(
+        token = NetSchoolAPI._extract_access_token_from_session_store(
             json.dumps(payload),
         )
         assert token == "tok-at"
 
     def test_list_no_active_fallback(self):
         payload = [{"accessToken": "fallback-tok"}]
-        token = NetSchool._extract_access_token_from_session_store(
+        token = NetSchoolAPI._extract_access_token_from_session_store(
             json.dumps(payload),
         )
         assert token == "fallback-tok"
 
     def test_invalid_json(self):
-        assert NetSchool._extract_access_token_from_session_store("not json") is None
+        assert NetSchoolAPI._extract_access_token_from_session_store("not json") is None
 
     def test_empty_list(self):
-        assert NetSchool._extract_access_token_from_session_store("[]") is None
+        assert NetSchoolAPI._extract_access_token_from_session_store("[]") is None
 
     def test_empty_dict(self):
-        assert NetSchool._extract_access_token_from_session_store("{}") is None
+        assert NetSchoolAPI._extract_access_token_from_session_store("{}") is None
 
 
 # ═══════════════════════════════════════════════════════════
@@ -73,23 +73,23 @@ class TestExtractAccessToken:
 
 class TestParseCookies:
     def test_full_cookie_string(self):
-        result = NetSchool._parse_cookies(
+        result = NetSchoolAPI._parse_cookies(
             "NSSESSIONID=abc123; other=val",
         )
         assert result == {"NSSESSIONID": "abc123", "other": "val"}
 
     def test_hex_session_id(self):
-        result = NetSchool._parse_cookies("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4")
+        result = NetSchoolAPI._parse_cookies("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4")
         assert result == {"NSSESSIONID": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"}
 
     def test_empty_string(self):
-        assert NetSchool._parse_cookies("") == {}
+        assert NetSchoolAPI._parse_cookies("") == {}
 
     def test_no_nssessionid(self):
-        assert NetSchool._parse_cookies("foo=bar; baz=qux") == {}
+        assert NetSchoolAPI._parse_cookies("foo=bar; baz=qux") == {}
 
     def test_whitespace(self):
-        result = NetSchool._parse_cookies("  NSSESSIONID=xyz  ; foo=bar  ")
+        result = NetSchoolAPI._parse_cookies("  NSSESSIONID=xyz  ; foo=bar  ")
         assert result["NSSESSIONID"] == "xyz"
 
 
@@ -130,17 +130,17 @@ class TestExceptions:
 
 
 # ═══════════════════════════════════════════════════════════
-#  NetSchool.__repr__
+#  NetSchoolAPI.__repr__
 # ═══════════════════════════════════════════════════════════
 
 
 class TestNetSchoolRepr:
     def test_repr_default(self):
-        ns = NetSchool.__new__(NetSchool)
+        ns = NetSchoolAPI.__new__(NetSchoolAPI)
         ns._http = type("H", (), {"base_url": "https://sgo.example.ru/webapi"})()
         ns._student_id = -1
         r = repr(ns)
-        assert "NetSchool" in r
+        assert "NetSchoolAPI" in r
         assert "sgo.example.ru" in r
 
 
@@ -152,7 +152,7 @@ class TestNetSchoolRepr:
 class TestSessionExport:
     def test_export_session_json(self):
         """export_session() возвращает валидный JSON."""
-        ns = NetSchool.__new__(NetSchool)
+        ns = NetSchoolAPI.__new__(NetSchoolAPI)
         ns._access_token = "tok123"
         ns._student_id = 42
         ns._year_id = 10

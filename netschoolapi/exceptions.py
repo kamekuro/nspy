@@ -1,4 +1,4 @@
-"""Исключения netschoolpy."""
+"""Исключения netschoolapi."""
 
 
 class NetSchoolError(Exception):

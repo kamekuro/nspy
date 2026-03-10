@@ -2,7 +2,7 @@
 
 Использование::
 
-    from netschoolpy.regions import REGIONS, get_url, list_regions
+    from netschoolapi.regions import REGIONS, get_url, list_regions
 
     url = get_url("Челябинская область")       # "https://sgo.edu-74.ru"
     url = get_url("челябинская")                # нечёткий поиск — тоже найдёт

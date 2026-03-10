@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "netschoolpy"
+name = "netschoolapi"
 version = "3.3.3"
 description = "Асинхронный клиент для «Сетевого города»"
 readme = "README.md"
@@ -13,7 +13,7 @@ authors = [
     { name = "Vladcom4iiik" },
 ]
 keywords = [
-    "netschool", "netschoolpy", "sgo",
+    "netschool", "netschoolapi", "netschoolpy", "sgo",
     "сетевой город", "дневник", "госуслуги", "esia",
     "education", "api", "web Education", "ir-tech",
     "электронный журнал", "school", "web2edu", "region",
@@ -42,15 +42,15 @@ dev = [
 ]
 
 [project.urls]
-Source = "https://github.com/Vladcom4iiik/netschoolpy"
-Issues = "https://github.com/Vladcom4iiik/netschoolpy/issues"
-Documentation = "https://github.com/Vladcom4iiik/netschoolpy/tree/main/docs"
+Source = "https://github.com/kamekuro/nspy"
+Issues = "https://github.com/kamekuro/nspy/issues"
+Documentation = "https://github.com/kamekuro/nspy/tree/main/docs"
 
 [tool.setuptools.packages.find]
-include = ["netschoolpy*"]
+include = ["netschoolapi*"]
 
 [tool.setuptools.package-data]
-netschoolpy = ["py.typed"]
+netschoolapi = ["py.typed"]
 
 [tool.ruff]
 target-version = "3.3.3"

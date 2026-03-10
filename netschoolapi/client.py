@@ -15,9 +15,9 @@ from urllib.parse import urljoin
 
 import httpx
 
-from netschoolpy import exceptions
-from netschoolpy.http import HttpSession
-from netschoolpy.models import (
+from . import exceptions
+from .http import HttpSession
+from .models import (
     Announcement,
     Assignment,
     Attachment,
@@ -31,7 +31,7 @@ from netschoolpy.models import (
     ShortSchool,
 )
 
-__all__ = ["NetSchool", "search_schools", "get_login_methods"]
+__all__ = ["NetSchoolAPI", "search_schools", "get_login_methods"]
 
 log = logging.getLogger(__name__)
 
@@ -48,12 +48,12 @@ _ESIA_API_HEADERS: dict[str, str] = {
 }
 
 
-class NetSchool:
+class NetSchoolAPI:
     """Асинхронный клиент для API «Сетевого города».
 
     Пример::
 
-        async with NetSchool("https://sgo.example.ru") as ns:
+        async with NetSchoolAPI("https://sgo.example.ru") as ns:
             await ns.login("user", "pass", "Школа №1")
             diary = await ns.diary()
     """
@@ -84,11 +84,11 @@ class NetSchool:
         self._keepalive_interval: int = 300  # 5 мин
 
     def __repr__(self) -> str:
-        return f"<NetSchool url={self._http.base_url!r} " f"student={self._student_id}>"
+        return f"<NetSchoolAPI url={self._http.base_url!r} " f"student={self._student_id}>"
 
     # ── контекстный менеджер ─────────────────────────────────
 
-    async def __aenter__(self) -> NetSchool:
+    async def __aenter__(self) -> "NetSchoolAPI":
         return self
 
     async def __aexit__(self, *exc: Any) -> None:
@@ -1243,7 +1243,7 @@ class NetSchool:
             return
         self._keepalive_task = loop.create_task(
             self._keepalive_loop(),
-            name="netschoolpy-keepalive",
+            name="netschoolapi-keepalive",
         )
 
     def _stop_keepalive(self) -> None:
@@ -1929,7 +1929,7 @@ async def search_schools(
     """Поиск школ по названию на указанном сервере.
 
     Не требует авторизации — удобно для выбора школы
-    перед вызовом :meth:`NetSchool.login`.
+    перед вызовом :meth:`NetSchoolAPI.login`.
 
     Args:
         url: Базовый URL сервера ``"Сетевого города"``
@@ -1944,7 +1944,7 @@ async def search_schools(
 
     Пример::
 
-        from netschoolpy import search_schools
+        from netschoolapi import search_schools
 
         schools = await search_schools(
             "https://sgo.e-mordovia.ru",
@@ -1957,7 +1957,7 @@ async def search_schools(
 
         schools = await search_schools("Республика Мордовия", "Лицей")
     """
-    from netschoolpy.regions import get_url as _get_url
+    from .regions import get_url as _get_url
 
     # Если передано имя региона вместо URL
     if not url.startswith(("http://", "https://")):
@@ -2004,7 +2004,7 @@ async def get_login_methods(
 
     Пример::
 
-        from netschoolpy import get_login_methods
+        from netschoolapi import get_login_methods
 
         methods = await get_login_methods("https://sgo.e-mordovia.ru")
         print(methods.summary)       # "логин/пароль + Госуслуги"
@@ -2017,7 +2017,7 @@ async def get_login_methods(
 
         methods = await get_login_methods("Республика Мордовия")
     """
-    from netschoolpy.regions import get_url as _get_url
+    from .regions import get_url as _get_url
 
     if not url.startswith(("http://", "https://")):
         resolved = _get_url(url)

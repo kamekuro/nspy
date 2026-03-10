@@ -1,4 +1,4 @@
-"""Модели данных netschoolpy — plain dataclasses с ручным парсингом JSON."""
+"""Модели данных netschoolapi — plain dataclasses с ручным парсингом JSON."""
 
 from __future__ import annotations
 

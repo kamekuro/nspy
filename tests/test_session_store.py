@@ -1,5 +1,5 @@
 import json
-from netschoolpy import NetSchool
+from netschoolapi import NetSchoolAPI
 
 
 def test_extract_access_token_from_session_store():
@@ -10,7 +10,7 @@ def test_extract_access_token_from_session_store():
         }
     ]
     session_store = json.dumps(payload)
-    token = NetSchool._extract_access_token_from_session_store(session_store)
+    token = NetSchoolAPI._extract_access_token_from_session_store(session_store)
     assert token == "token-123"
 
 
@@ -22,5 +22,5 @@ def test_extract_access_token_from_session_store_stringified():
         }
     ]
     session_store = json.dumps(json.dumps(payload))
-    token = NetSchool._extract_access_token_from_session_store(session_store)
+    token = NetSchoolAPI._extract_access_token_from_session_store(session_store)
     assert token == "token-456"

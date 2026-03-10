@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from netschoolpy.regions import REGIONS, get_url, list_regions
+from netschoolapi.regions import REGIONS, get_url, list_regions
 
 
 class TestREGIONS:

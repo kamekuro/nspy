@@ -1,6 +1,6 @@
 # API Reference
 
-## NetSchool
+## NetSchoolAPI
 
 Основной класс для взаимодействия с API.
 
@@ -8,13 +8,13 @@
 
 Инициализирует клиент.
 
-- `url` (str): URL вашего сервера NetSchool (например, `https://sgo.example.ru`).
+- `url` (str): URL вашего сервера NetSchoolAPI (например, `https://sgo.example.ru`).
 - `timeout` (int, optional): Таймаут HTTP-запросов (по-умолчанию 5 сек).
 
 Поддерживает `async with`:
 
 ```python
-async with NetSchool("https://sgo.example.ru") as ns:
+async with NetSchoolAPI("https://sgo.example.ru") as ns:
     await ns.login(...)
 ```
 
