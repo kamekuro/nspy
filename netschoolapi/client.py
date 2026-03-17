@@ -327,7 +327,7 @@ class NetSchoolAPI:
         esia_client: httpx.AsyncClient,
         sgo_origin: str,
         login_state: str,
-        school: str | None,
+        school: int | str | None,
         *,
         timeout: int | None = None,
     ) -> None:
@@ -421,7 +421,7 @@ class NetSchoolAPI:
         esia_login: str | None = None,
         esia_password: str | None = None,
         *,
-        school: str | None = None,
+        school: int | str | None = None,
         timeout: int | None = None,
         otp_callback=None,
     ) -> None:
@@ -436,7 +436,7 @@ class NetSchoolAPI:
                            Если не указан — спросит через input().
         :param esia_password: Пароль Госуслуг.
                               Если не указан — спросит через input().
-        :param school: Название школы/организации для выбора.
+        :param school: Название или ID школы/организации для выбора.
                        Если к аккаунту привязано несколько организаций
                        и school не указан — выбор через input().
         :param otp_callback: ``async def(mfa_type: str, mfa_info: dict) -> str``
@@ -536,7 +536,7 @@ class NetSchoolAPI:
         qr_callback=None,
         qr_timeout: int = 120,
         *,
-        school: str | None = None,
+        school: int | str | None = None,
         timeout: int | None = None,
         otp_callback=None,
     ) -> str:
@@ -549,7 +549,7 @@ class NetSchoolAPI:
         :param qr_callback: ``async def(qr_data: str)`` — колбэк
             для отображения QR. Если ``None`` — печатается в stdout.
         :param qr_timeout: Таймаут ожидания сканирования (сек).
-        :param school: Название организации (подстрока).
+        :param school: Название организации (подстрока) или её ID.
         :return: signed_token (строка для QR-кода).
         """
         sgo_origin = self._http.base_url.rstrip("/").rsplit("/webapi", 1)[0]
@@ -804,16 +804,40 @@ class NetSchoolAPI:
     @staticmethod
     def _pick_esia_user(
         users: list[dict],
-        school: str | None = None,
+        school: int | str | None = None,
     ) -> dict:
         """Выбрать пользователя (организацию) из списка account-info.
 
         - Если пользователь один — возвращаем сразу.
-        - Если передан ``school`` — ищем совпадение по имени.
+        - Если передан ``school`` как ID — ищем совпадение по school ID
+          внутри составного идентификатора пользователя ESIA.
+        - Если передан ``school`` как строка — ищем совпадение по имени.
         - Иначе — интерактивный выбор через ``input()``.
         """
         if len(users) == 1:
             return users[0]
+
+        def _school_ids(u: dict) -> set[int]:
+            ids: set[int] = set()
+            for key in ("schoolId", "school_id", "organizationId", "organization_id"):
+                value = u.get(key)
+                if isinstance(value, int):
+                    ids.add(value)
+                elif isinstance(value, str) and value.strip().isdigit():
+                    ids.add(int(value.strip()))
+
+            raw_id = u.get("id")
+            if raw_id is not None:
+                parts = [part.strip() for part in str(raw_id).split(",")]
+                numeric_parts = [int(part) for part in parts if part.isdigit()]
+
+                # В ESIA account-info `id` часто выглядит как `user_id,school_id,`.
+                if len(numeric_parts) >= 2:
+                    ids.add(numeric_parts[1])
+                elif len(numeric_parts) == 1:
+                    ids.add(numeric_parts[0])
+
+            return ids
 
         def _label(u: dict) -> str:
             return (
@@ -826,7 +850,28 @@ class NetSchoolAPI:
 
         labels = [_label(u) for u in users]
 
-        if school:
+        if school is not None:
+            school_id: int | None = None
+            if isinstance(school, int):
+                school_id = school
+            elif school.isdigit():
+                school_id = int(school)
+
+            if school_id is not None:
+                matches = [user for user in users if school_id in _school_ids(user)]
+                if len(matches) == 1:
+                    return matches[0]
+                if len(matches) > 1:
+                    raise exceptions.LoginError(
+                        f"Найдено несколько организаций с ID {school_id}. "
+                        f"Уточните выбор по названию. "
+                        f"Доступные ID: {', '.join(str(u.get('id', '?')) for u in users)}"
+                    )
+                raise exceptions.LoginError(
+                    f"Организация с ID {school_id} не найдена. "
+                    f"Доступные ID: {', '.join(str(u.get('id', '?')) for u in users)}"
+                )
+
             needle = school.lower()
             for idx, lbl in enumerate(labels):
                 if needle in lbl.lower():
