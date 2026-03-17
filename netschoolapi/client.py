@@ -1710,7 +1710,7 @@ class NetSchoolAPI:
 
     async def search_schools(
         self,
-        query: str = "",
+        query: str,
         *,
         timeout: int | None = None,
     ) -> List[ShortSchool]:
@@ -1718,7 +1718,6 @@ class NetSchoolAPI:
 
         Args:
             query: Строка поиска (часть названия школы).
-                   Если пустая — вернёт все доступные школы.
 
         Returns:
             Список :class:`ShortSchool` с результатами поиска.
@@ -1729,11 +1728,10 @@ class NetSchoolAPI:
             for s in schools:
                 print(f"{s.id}: {s.short_name} — {s.name}")
         """
-        # SGO требует хотя бы один символ в запросе
-        name = query if query else "У"
+        params = [("name", x) for x in query.split()]
         resp = await self._http.get(
             "webapi/schools/search",
-            params={"name": name},
+            params=params,
             timeout=timeout,
         )
         return [ShortSchool.from_raw(s) for s in resp.json()]
