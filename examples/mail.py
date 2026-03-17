@@ -1,12 +1,13 @@
 """Пример: работа с внутренней почтой — список, чтение, скачивание файлов."""
+
 import asyncio
 from io import BytesIO
 
-from netschoolpy import NetSchool
+from netschoolpy import NetSchoolAPI
 
 
 async def main():
-    async with NetSchool("https://sgo.example.ru") as ns:
+    async with NetSchoolAPI("https://sgo.example.ru") as ns:
         await ns.login("student_login", "password", "School Name")
 
         # Список входящих писем (первая страница)

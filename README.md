@@ -56,14 +56,14 @@ async with NetSchool("https://sgo.example.ru") as ns:
     await ns.login_via_gosuslugi(
         esia_login="+79001234567",     # телефон, email или СНИЛС
         esia_password="your_password",
-        school="Школа №1",             # если к аккаунту привязано несколько организаций
+        school_id=12345,               # ID школы, если к аккаунту привязано несколько организаций
     )
     diary = await ns.diary()
 ```
 
 При MFA код из SMS/TOTP/MAX будет запрошен через `input()`.
-Если `esia_login` / `esia_password` не указаны, они тоже запрашиваются через `input()`.
-Если к аккаунту привязано несколько организаций и `school` не указан — будет предложен интерактивный выбор.
+Если `esia_login` / `esia_password` не указаны, они тоже запрашиваются интерактивно.
+Если к аккаунту привязано несколько организаций, передайте `school_id=<ID школы>`.
 
 ### Через Госуслуги (QR-код)
 
@@ -81,7 +81,7 @@ async with NetSchool("https://sgo.example.ru") as ns:
     await ns.login_via_gosuslugi_qr(
         qr_callback=show_qr,   # вызовется после генерации QR
         qr_timeout=120,         # секунд ожидания сканирования
-        school="Школа №1",     # если привязано несколько организаций
+        school_id=12345,        # ID школы, если привязано несколько организаций
     )
     diary = await ns.diary()
 ```
@@ -90,7 +90,7 @@ async with NetSchool("https://sgo.example.ru") as ns:
   `gosuslugi://auth/signed_token=...` для кодирования в QR.
   Если не указан — QR печатается в stdout (`pip install qrcode`).
 - `qr_timeout` — таймаут ожидания сканирования (по-умолчанию 120 сек).
-- `school` — название организации (подстрока). Если привязано несколько — выбирает автоматически. Без параметра — интерактивный выбор.
+- `school_id` — ID школы/организации, если к аккаунту привязано несколько организаций.
 
 ### По токену / куки (продвинутое)
 

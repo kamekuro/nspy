@@ -1,11 +1,11 @@
-"""Исключения netschoolpy."""
+"""Исключения netschoolapi."""
 
 
-class NetSchoolError(Exception):
+class NetSchoolAPIError(Exception):
     """Базовое исключение библиотеки."""
 
 
-class LoginError(NetSchoolError):
+class LoginError(NetSchoolAPIError):
     """Ошибка авторизации (неверные данные, школа не найдена и т.д.)."""
 
 
@@ -21,9 +21,9 @@ class SchoolNotFound(LoginError):
     """Школа с указанным названием не найдена."""
 
 
-class SessionExpired(NetSchoolError):
+class SessionExpired(NetSchoolAPIError):
     """Сессия истекла (HTTP 401). Необходимо повторно авторизоваться."""
 
 
-class ServerUnavailable(NetSchoolError):
+class ServerUnavailable(NetSchoolAPIError):
     """Сервер не ответил в отведённое время."""

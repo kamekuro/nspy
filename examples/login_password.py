@@ -1,6 +1,6 @@
 import asyncio
 import os
-from netschoolpy import NetSchool
+from netschoolpy import NetSchoolAPI
 
 
 async def main():
@@ -10,7 +10,7 @@ async def main():
     password = os.getenv("NS_PASSWORD", "password")
     school = os.getenv("NS_SCHOOL", "My School Name")
 
-    async with NetSchool(url) as ns:
+    async with NetSchoolAPI(url) as ns:
         try:
             # Вход по логину и паролю
             print(f"Попытка входа в {url}...")

@@ -9,9 +9,9 @@
 ### Обычный вход
 
 ```python
-from netschoolpy import NetSchool
+from netschoolpy import NetSchoolAPI
 
-async with NetSchool('https://your-netschool-url.ru') as ns:
+async with NetSchoolAPI('https://your-netschool-url.ru') as ns:
     await ns.login('student_login', 'password', 'School Name')
 ```
 
@@ -82,7 +82,7 @@ for day in diary.schedule:
 Библиотека выбрасывает исключения в случае ошибок авторизации или сети.
 
 ```python
-from netschoolpy import NetSchool
+from netschoolpy import NetSchoolAPI
 from netschoolpy.exceptions import LoginError, SchoolNotFound
 
 try:

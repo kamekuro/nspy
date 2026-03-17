@@ -1,6 +1,6 @@
 # NetschoolPy
 
-**NetschoolPy** – это асинхронная библиотека для работы с электронным дневником «Сетевой город. Образование» (NetSchool).
+**NetschoolPy** – это асинхронная библиотека для работы с электронным дневником «Сетевой город. Образование» (NetSchoolAPI).
 
 Библиотека полностью переписана и оптимизирована для удобного использования в современных Python проектах. Поддерживает вход как по логину/паролю от школы, так и через **Госуслуги (ESIA)**.
 
@@ -14,10 +14,10 @@ pip install netschoolpy
 
 ```python
 import asyncio
-from netschoolpy import NetSchool
+from netschoolpy import NetSchoolAPI
 
 async def main():
-    async with NetSchool('https://sgo.example.ru') as ns:
+    async with NetSchoolAPI('https://sgo.example.ru') as ns:
         await ns.login('login', 'password', 'Школа №1')
         
         diary = await ns.diary()

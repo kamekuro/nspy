@@ -1,4 +1,4 @@
-"""Модели данных netschoolpy — plain dataclasses с ручным парсингом JSON."""
+"""Модели данных netschoolapi — plain dataclasses с ручным парсингом JSON."""
 
 from __future__ import annotations
 
@@ -27,13 +27,14 @@ def _parse_datetime(value: Any) -> datetime.datetime:
     s = str(value)
     # Нормализуем дробную часть секунд до 6 цифр
     import re as _re
-    m = _re.match(r'^(.+\.\d{1,6})(\d*)(.*)$', s)
+
+    m = _re.match(r"^(.+\.\d{1,6})(\d*)(.*)$", s)
     if m:
         frac = m.group(1)
         # дополняем до 6 цифр после точки
-        dot_idx = frac.rfind('.')
-        digits_after = frac[dot_idx + 1:]
-        frac = frac[:dot_idx + 1] + digits_after.ljust(6, '0')
+        dot_idx = frac.rfind(".")
+        digits_after = frac[dot_idx + 1 :]
+        frac = frac[: dot_idx + 1] + digits_after.ljust(6, "0")
         s = frac + m.group(3)
     return datetime.datetime.fromisoformat(s)
 
@@ -43,11 +44,11 @@ def _parse_time(value: Any) -> datetime.time:
     if isinstance(value, datetime.time):
         return value
     parts = str(value).split(":")
-    return datetime.time(int(parts[0]), int(parts[1]),
-                         int(parts[2]) if len(parts) > 2 else 0)
+    return datetime.time(int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) > 2 else 0)
 
 
 # ──────────────────────────── Вложения ────────────────────────────
+
 
 @dataclass(frozen=True)
 class Attachment:
@@ -69,6 +70,7 @@ class Attachment:
 
 # ───────────────────────────── Автор ──────────────────────────────
 
+
 @dataclass(frozen=True)
 class Author:
     id: int
@@ -86,6 +88,7 @@ class Author:
 
 # ─────────────────────────── Объявления ───────────────────────────
 
+
 @dataclass(frozen=True)
 class Announcement:
     name: str
@@ -101,13 +104,12 @@ class Announcement:
             author=Author.from_raw(data["author"]),
             content=data.get("description", ""),
             post_date=_parse_datetime(data["postDate"]),
-            attachments=[
-                Attachment.from_raw(a) for a in data.get("attachments", [])
-            ],
+            attachments=[Attachment.from_raw(a) for a in data.get("attachments", [])],
         )
 
 
 # ─────────────────────────── Задания ─────────────────────────────
+
 
 @dataclass(frozen=True)
 class Assignment:
@@ -146,7 +148,11 @@ class Assignment:
             duty = False
 
         mark_comment = data.get("markComment")
-        comment = mark_comment["name"] if isinstance(mark_comment, dict) and "name" in mark_comment else ""
+        comment = (
+            mark_comment["name"]
+            if isinstance(mark_comment, dict) and "name" in mark_comment
+            else ""
+        )
 
         kind_id = data.get("typeId", 0)
         type_info = (type_mapping or {}).get(kind_id, {})
@@ -174,6 +180,7 @@ class Assignment:
 
 # ──────────────────────────── Уроки ──────────────────────────────
 
+
 @dataclass(frozen=True)
 class Lesson:
     day: datetime.date
@@ -182,6 +189,10 @@ class Lesson:
     room: str
     number: int
     subject: str
+    is_distance_lesson: bool
+    is_ea_lesson: bool
+    class_meeting_id: int
+    relay: int
     assignments: List[Assignment] = field(default_factory=list)
 
     @classmethod
@@ -193,14 +204,18 @@ class Lesson:
             room=data.get("room") or "",
             number=data["number"],
             subject=data.get("subjectName", ""),
+            is_distance_lesson=data.get("isDistanceLesson", False),
+            is_ea_lesson=data.get("isEaLesson", False),
+            class_meeting_id=data.get("classmeetingId", None),
+            relay=data.get("relay", None),
             assignments=[
-                Assignment.from_raw(a, type_mapping)
-                for a in data.get("assignments", [])
+                Assignment.from_raw(a, type_mapping) for a in data.get("assignments", [])
             ],
         )
 
 
 # ──────────────────────────── День ───────────────────────────────
+
 
 @dataclass(frozen=True)
 class Day:
@@ -216,6 +231,7 @@ class Day:
 
 
 # ─────────────────────────── Дневник ─────────────────────────────
+
 
 @dataclass(frozen=True)
 class Diary:
@@ -233,6 +249,7 @@ class Diary:
 
 
 # ─────────────────────────── Школы ───────────────────────────────
+
 
 @dataclass(frozen=True)
 class ShortSchool:
@@ -294,6 +311,7 @@ class School:
 
 # ─────────────────────────── Способы входа ───────────────────────────
 
+
 @dataclass(frozen=True)
 class LoginMethods:
     """Доступные способы авторизации на сервере SGO.
@@ -312,6 +330,7 @@ class LoginMethods:
 
     Свойство :attr:`summary` возвращает человекочитаемое описание.
     """
+
     password: bool
     esia: bool
     esia_main: bool
@@ -370,9 +389,11 @@ class LoginMethods:
 
 # ─────────────────────────── Почта / сообщения ─────────────────────
 
+
 @dataclass(frozen=True)
 class MailEntry:
     """Краткая запись о письме (из списка/реестра)."""
+
     id: int
     subject: str
     author: str
@@ -393,6 +414,7 @@ class MailEntry:
 @dataclass(frozen=True)
 class MailPage:
     """Страница списка писем из реестра."""
+
     entries: List[MailEntry]
     page: int
     total_items: int
@@ -409,6 +431,7 @@ class MailPage:
 @dataclass(frozen=True)
 class MailRecipient:
     """Получатель письма / контакт."""
+
     id: str  # base64-кодированный идентификатор
     name: str
     organization_name: str
@@ -425,6 +448,7 @@ class MailRecipient:
 @dataclass(frozen=True)
 class Message:
     """Письмо внутренней почты SGO."""
+
     id: int
     subject: str
     text: str
@@ -453,8 +477,72 @@ class Message:
             mailbox=data.get("mailBox", "Inbox"),
             can_reply=data.get("canReplyAll", False) or not data.get("noReply", True),
             can_forward=data.get("canForward", False),
-            file_attachments=[
-                Attachment.from_raw(a)
-                for a in data.get("fileAttachments", [])
-            ],
+            file_attachments=[Attachment.from_raw(a) for a in data.get("fileAttachments", [])],
+        )
+
+
+# ─────────────────────────── Прочее ─────────────────────
+
+
+@dataclass(frozen=True)
+class StudentSettings:
+    show_mobile_phone: bool
+    default_desktop: int
+    language: str
+    favorite_reports: list
+    password_expired: int
+    recovery_answer: str
+    recovery_question: str
+    theme: int
+    user_id: int
+    show_netschool_app: bool
+    show_sferum_banner: bool
+
+    @classmethod
+    def from_raw(cls, data: dict) -> Student:
+        return cls(
+            show_mobile_phone=data.get("showMobilePhone", None),
+            default_desktop=data.get("defaultDesktop", None),
+            language=data.get("language", None),
+            favorite_reports=data.get("favoriteReports", None),
+            password_expired=data.get("passwordExpired", None),
+            recovery_answer=data.get("recoveryAnswer", None),
+            recovery_question=data.get("recoveryQuestion", None),
+            theme=data.get("theme", None),
+            user_id=data.get("userId", None),
+            show_netschool_app=data.get("showNetSchoolApp", None),
+            show_sferum_banner=data.get("showSferumBanner", None),
+        )
+
+
+@dataclass(frozen=True)
+class Student:
+    user_id: int
+    first_name: str
+    last_name: str
+    middle_name: str
+    login: str
+    birthdate: datetime
+    roles: list
+    school_year_id: int
+    mobile_phone: str
+    email: str
+    exists_photo: bool
+    user_settings: StudentSettings
+
+    @classmethod
+    def from_raw(cls, data: dict) -> Student:
+        return cls(
+            user_id=data.get("userId", None),
+            first_name=data.get("firstName", None),
+            last_name=data.get("lastName", None),
+            middle_name=data.get("middleName", None),
+            login=data.get("loginName", None),
+            birthdate=data.get("birthDate", None),
+            roles=data.get("roles", None),
+            school_year_id=data.get("schoolyearId", None),
+            mobile_phone=data.get("mobilePhone", None),
+            email=data.get("email", None),
+            exists_photo=data.get("existsPhoto", None),
+            user_settings=StudentSettings.from_raw(data.get("userSettings", {})),
         )

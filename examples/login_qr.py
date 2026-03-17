@@ -10,12 +10,12 @@ except ImportError:
     print("или pip install qrcode")
     sys.exit(1)
 
-from netschoolpy import NetSchool
+from netschoolpy import NetSchoolAPI
 
 
 async def main():
     url = os.getenv("NS_URL", "https://sgo.your-region.ru")
-    
+
     # Callback-функция, которая будет вызвана библиотекой
     # Она получает строку `qr_data`, которую нужно превратить в QR-код
     async def my_qr_callback(qr_data: str):
@@ -27,7 +27,7 @@ async def main():
         print("Отсканируйте этот код в мобильном приложении Госуслуги -> Сканер")
         print("(Ожидание сканирования...)\n")
 
-    async with NetSchool(url) as ns:
+    async with NetSchoolAPI(url) as ns:
         try:
             print("Запуск входа через QR-код Госуслуг...")
 
