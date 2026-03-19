@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import logging
 import re
@@ -330,6 +331,7 @@ class NetSchoolAPI:
         school: int | str | None,
         *,
         timeout: int | None = None,
+        esia_user_callback=None,
     ) -> None:
         """Account-info → выбор организации → IDP-логин → инициализация SGO."""
 
@@ -353,7 +355,18 @@ class NetSchoolAPI:
                 "Привяжите аккаунт Госуслуг к Сетевому Городу."
             )
 
-        user = self._pick_esia_user(users, school)
+        if esia_user_callback is None:
+            user = self._pick_esia_user(users, school)
+        else:
+            user = esia_user_callback(users, school)
+            if inspect.isawaitable(user):
+                user = await user
+            if not isinstance(user, dict):
+                raise exceptions.LoginError(
+                    "Колбэк выбора пользователя ESIA должен вернуть dict "
+                    "с данными пользователя из account-info."
+                )
+
         user_id = user["id"]
         roles = user.get("roles", [])
         role = roles[0]["id"] if roles else None
@@ -424,6 +437,7 @@ class NetSchoolAPI:
         school: int | str | None = None,
         timeout: int | None = None,
         otp_callback=None,
+        esia_user_callback=None,
     ) -> None:
         """Полноценный вход через Госуслуги (ESIA).
 
@@ -445,6 +459,11 @@ class NetSchoolAPI:
                              Если не указан — код запрашивается через input().
                              Пример: можно использовать для интеграции с ботом,
                              чтобы запросить код у пользователя через Telegram.
+        :param esia_user_callback: ``def(users: list[dict], school) -> dict``
+                                   или ``async def(...) -> dict``.
+                                   Колбэк выбора пользователя/организации из
+                                   ESIA account-info. Если не указан —
+                                   используется ``_pick_esia_user``.
         """
         if esia_login is None:
             esia_login = input("Логин Госуслуг (телефон/email/СНИЛС): ").strip()
@@ -519,6 +538,7 @@ class NetSchoolAPI:
                     login_state,
                     school,
                     timeout=timeout,
+                    esia_user_callback=esia_user_callback,
                 )
             except exceptions.ESIAError:
                 raise
@@ -539,6 +559,7 @@ class NetSchoolAPI:
         school: int | str | None = None,
         timeout: int | None = None,
         otp_callback=None,
+        esia_user_callback=None,
     ) -> str:
         """Вход через Госуслуги по QR-коду.
 
@@ -550,6 +571,10 @@ class NetSchoolAPI:
             для отображения QR. Если ``None`` — печатается в stdout.
         :param qr_timeout: Таймаут ожидания сканирования (сек).
         :param school: Название организации (подстрока) или её ID.
+        :param esia_user_callback: ``def(users: list[dict], school) -> dict``
+            или ``async def(...) -> dict``. Колбэк выбора
+            пользователя/организации из ESIA account-info.
+            Если не указан — используется ``_pick_esia_user``.
         :return: signed_token (строка для QR-кода).
         """
         sgo_origin = self._http.base_url.rstrip("/").rsplit("/webapi", 1)[0]
@@ -674,6 +699,7 @@ class NetSchoolAPI:
                     login_state,
                     school,
                     timeout=timeout,
+                    esia_user_callback=esia_user_callback,
                 )
             except exceptions.ESIAError:
                 raise
